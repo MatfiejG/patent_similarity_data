@@ -20,6 +20,11 @@ The expected input columns are:
 - `patent_id`
 - `abstract` or `text`
 
+During long CSV passes, `patent_d2v.py` displays `tqdm` progress bars for:
+
+- reading patent records for Doc2Vec training
+- exporting trained patent vectors to CSV and JSONL
+
 ## Install dependencies
 
 Before running the scripts, install the required Python packages:
@@ -27,6 +32,8 @@ Before running the scripts, install the required Python packages:
 ```bash
 python -m pip install -r requirements.txt
 ```
+
+The requirements include `tqdm`, which is used only for terminal progress bars.
 
 ## Legacy data conversion
 

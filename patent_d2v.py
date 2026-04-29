@@ -11,6 +11,7 @@ from pathlib import Path
 
 import gensim
 from gensim.models.doc2vec import TaggedDocument
+from tqdm import tqdm
 
 
 start = timeit.default_timer()
@@ -38,16 +39,26 @@ def tokenize_text(text):
     return [word.lower() for word in words]
 
 
-def iter_patent_records(csv_path, text_columns, min_words, delimiter):
+def iter_patent_records(
+    csv_path,
+    text_columns,
+    min_words,
+    delimiter,
+    progress_description=None,
+):
     seen_patents = set()
 
     with open(csv_path, 'r', encoding='utf-8', newline='') as csv_file:
         reader = csv.DictReader(csv_file, delimiter=delimiter)
+        if progress_description:
+            reader = tqdm(
+                reader,
+                desc=progress_description,
+                unit='row',
+                dynamic_ncols=True,
+            )
 
-        for row_number, row in enumerate(reader, start=1):
-            if row_number % 100000 == 0:
-                print('Processing patent ' + str(row_number))
-
+        for row in reader:
             patent_id = (row.get('patent_id') or '').strip()
             if not patent_id:
                 continue
@@ -92,6 +103,7 @@ class DocIterator(object):
             text_columns=self.text_columns,
             min_words=self.min_words,
             delimiter=self.delimiter,
+            progress_description='Reading patents for Doc2Vec',
         ):
             yield TaggedDocument(record['words'], [record['patent_id']])
 
@@ -114,6 +126,7 @@ def export_vectors(model, csv_path, text_columns, min_words, delimiter):
                 text_columns=text_columns,
                 min_words=min_words,
                 delimiter=delimiter,
+                progress_description='Exporting vectors',
             ):
                 patent_id = record['patent_id']
                 vector = [float(value) for value in model.dv[patent_id]]
