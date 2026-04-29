@@ -1,0 +1,12 @@
+# dane i wyniki
+Data/
+results/
+Outputs/
+*.csv
+*.json
+*.model
+*jsonl
+
+# python
+__pycache__/
+*.pyc
