@@ -67,11 +67,26 @@ df = pd.read_json("Outputs/patent_doc2v_vectors.jsonl", lines=True)
 df.head()
 ```
 
+## Vector-only similarity notebook
+
+`patent_sim_data_vectors_only_notebook.ipynb` demonstrates the downstream analysis workflow using only the exported vector file:
+
+- loads `Outputs/patent_doc2v_vectors.csv`
+- validates that `patent_id` and `vector_json` are present
+- parses each JSON-encoded vector into a NumPy array
+- builds an in-memory patent ID to vector lookup
+- provides `patent_pair_sim(patent1, patent2)` for cosine similarity between two selected patents
+- computes all unique pairwise cosine similarities with `sklearn.metrics.pairwise.cosine_similarity`
+- writes the pairwise results to `Outputs/patent_pairwise_similarity.parquet`, or to `Outputs/patent_pairwise_similarity.csv.gz` if Parquet support is unavailable
+- plots and saves the similarity distribution as `Outputs/patent_similarity_distribution.png`
+
+Because the notebook constructs the full cosine similarity matrix, memory use scales quadratically with the number of patents. It is suitable for exploratory work and moderate test exports; large patent collections may require batching, approximate nearest-neighbor search, or pairwise computation over selected subsets.
+
 ## Notes
 
 - The current test CSV in this workspace is `all_patent_names_abstracts.csv`. A file named `all_patent_names.csv` was not present.
 - The minimum token threshold was reduced so the abstract-only test data can be used for training.
-- The original notebook in this repository still contains SQLite-based analysis examples and should be treated as legacy until those analysis steps are rewritten around file-based inputs.
+- The original notebook in this repository still contains SQLite-based analysis examples and should be treated as legacy until those analysis steps are rewritten around file-based inputs. The vectors-only notebook is the current file-based example for similarity analysis.
 
 ## Reference
 
