@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import numpy as np
 import pandas as pd
+from pandas import DataFrame
 import seaborn as sns
 import pyarrow.parquet as pq
 from matplotlib import pyplot as plt
@@ -15,10 +16,17 @@ from tqdm import tqdm
 
 # Load the vectors
 vectors_df = pd.read_csv('Outputs/patent_doc2v_vectors.csv')
+meta_data: DataFrame = pd.read_csv('Data/Test//Dane ze starego papera.csv', delimiter=';')
 patent_id_list = vectors_df['patent_id'].values
 vectors = np.array([json.loads(v) for v in tqdm(vectors_df['vector_json'], desc='Loading vectors')]).astype(np.float32)
 
 vector_map = dict(zip(patent_id_list, vectors))
+patent_group_map = (
+    meta_data.drop_duplicates('Number')
+    .assign(Number=lambda df: df['Number'].astype(str))
+    .set_index('Number')['Group']
+)
+patent_group_list = pd.Series(patent_id_list).astype(str).map(patent_group_map).values
 
 def patent_pair_sim(patent1, patent2):
     '''Return cosine similarity for two patent IDs from the loaded vectors.'''
@@ -48,6 +56,8 @@ with tqdm(total=len(upper_i), desc='Creating pairwise DataFrame') as pbar:
     pairwise_data = {
         'patent_id_1': patent_id_list[upper_i],
         'patent_id_2': patent_id_list[upper_j],
+        'patent_group_1': patent_group_list[upper_i],
+        'patent_group_2': patent_group_list[upper_j],
         'similarity': sim_matrix[upper_i, upper_j],
     }
     pbar.update(len(upper_i))
