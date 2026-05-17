@@ -21,12 +21,20 @@ patent_id_list = vectors_df['patent_id'].values
 vectors = np.array([json.loads(v) for v in tqdm(vectors_df['vector_json'], desc='Loading vectors')]).astype(np.float32)
 
 vector_map = dict(zip(patent_id_list, vectors))
-patent_group_map = (
+
+patent_metadata_map = (
     meta_data.drop_duplicates('Number')
     .assign(Number=lambda df: df['Number'].astype(str))
-    .set_index('Number')['Group']
+    .set_index('Number')[['Group', 'Thicket ID', 'Thicket z csv']]
 )
-patent_group_list = pd.Series(patent_id_list).astype(str).map(patent_group_map).values
+
+patent_id_array = pd.Series(patent_id_list).astype(str).values
+
+patent_metadata_list = patent_metadata_map.reindex(patent_id_array)
+
+patent_group_list = patent_metadata_list['Group'].values
+patent_thicket_id_list = patent_metadata_list['Thicket ID'].values
+patent_thicket_csv_list = patent_metadata_list['Thicket z csv'].values  
 
 def patent_pair_sim(patent1, patent2):
     '''Return cosine similarity for two patent IDs from the loaded vectors.'''
@@ -52,16 +60,18 @@ with tqdm(desc='Computing similarity matrix') as pbar:
     pbar.update(1)
 
 upper_i, upper_j = np.triu_indices(n, k=1)
-with tqdm(total=len(upper_i), desc='Creating pairwise DataFrame') as pbar:
-    pairwise_data = {
-        'patent_id_1': patent_id_list[upper_i],
-        'patent_id_2': patent_id_list[upper_j],
-        'patent_group_1': patent_group_list[upper_i],
-        'patent_group_2': patent_group_list[upper_j],
-        'similarity': sim_matrix[upper_i, upper_j],
-    }
-    pbar.update(len(upper_i))
-    pairwise_df = pd.DataFrame(pairwise_data)
+pairwise_data = {
+    'patent_id_1': patent_id_list[upper_i],
+    'patent_id_2': patent_id_list[upper_j],
+    'patent_group_1': patent_group_list[upper_i],
+    'patent_group_2': patent_group_list[upper_j],
+    'patent_thicket_id_1': patent_thicket_id_list[upper_i],
+    'patent_thicket_id_2': patent_thicket_id_list[upper_j],
+    'patent_thicket_csv_1': patent_thicket_csv_list[upper_i],
+    'patent_thicket_csv_2': patent_thicket_csv_list[upper_j],
+    'similarity': sim_matrix[upper_i, upper_j],
+}
+pairwise_df = pd.DataFrame(pairwise_data)
 
 print('Created pairwise DataFrame with shape', pairwise_df.shape)
 output_path = Path('Outputs/patent_pairwise_similarity.parquet')
