@@ -54,7 +54,7 @@ CSV_DELIMITER = ';'
 PATENT_ID_COLUMNS = ('patent_id', 'Patent_number', 'patent_number')
 DESCRIPTION_TEXT_COLUMNS = ('Description', 'description', 'body', 'text')
 CLAIMS_TEXT_COLUMNS = ('claims', 'Claims', 'claim', 'text')
-MIN_WORDS = 20
+MIN_WORDS = 200
 VECTOR_SIZE = 300
 EPOCHS = 12
 
@@ -209,7 +209,7 @@ class DocIterator(object):
         patent_id_columns,
         description_text_columns,
         claims_text_columns,
-        min_words=20,
+        min_words=200,
         delimiter=';',
     ):
         self.descriptions_csv_path = descriptions_csv_path
