@@ -4,7 +4,12 @@ This project was changed so you can test the patent vector workflow without need
 
 ## What changed
 
-`patent_d2v.py` used to read patent text from SQL tables. It now reads directly from the CSV file in `Data/Test/all_patent_names_abstracts.csv`.
+`patent_algo_d2v.py` used to read patent text from SQL tables and, later, from an abstract-only test CSV. It now reads directly from the full raw CSV files:
+
+- `Data/Raw/all_patent_names_description.csv`
+- `Data/Raw/all_patent_names_claims.csv`
+
+For each `Patent_number`, the script joins the description first and the claims second into one document before Doc2Vec training.
 
 The script used to save vectors back into SQLite. It now saves them as regular files in the `Outputs` folder:
 
@@ -23,9 +28,7 @@ You can now inspect the outputs without any database software.
 
 ## Important practical difference
 
-The available test file contains abstracts, not full patent descriptions plus claims. Because abstracts are much shorter, the script now accepts shorter texts during training.
-
-This means the vectors are useful for testing the workflow, but they are not exactly the same as vectors trained on the original full-text patent database.
+The workflow has moved from the abstract-only test data to fuller patent text. The resulting vectors should therefore reflect substantially more technical content than the earlier test run, because each patent document includes both the description/body text and the claims when both are available.
 
 ## Legacy helper script
 
@@ -43,4 +46,4 @@ If you want to continue working only with CSV files, the next natural step is to
 
 instead of reading the `doc2vec` table from SQLite.
 
-If you later want research-grade vectors rather than a test run, you should prepare a richer input CSV with longer patent text, such as abstracts plus claims or full descriptions.
+For large full-text runs, monitor runtime and memory use. The script streams descriptions during training/export and loads the claims file into a patent-number lookup so each description can be combined with its matching claims.

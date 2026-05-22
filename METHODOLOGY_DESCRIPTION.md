@@ -1,16 +1,16 @@
 # Methodological Description of the Patent Embedding Procedure
 
-This document describes the analytical procedure implemented in `patent_d2v.py` in a form suitable for adaptation into a scholarly manuscript. It focuses on the conceptual logic of the code rather than on software installation or execution details.
+This document describes the analytical procedure implemented in `patent_algo_d2v.py` in a form suitable for adaptation into a scholarly manuscript. It focuses on the conceptual logic of the code rather than on software installation or execution details.
 
 ## Overview
 
 The procedure constructs distributed vector representations of patent documents using a Doc2Vec model trained on textual patent descriptions. The central aim is to transform heterogeneous patent text into fixed-length numerical vectors that preserve distributional information about document content. These vectors can subsequently be used as inputs for similarity measurement, clustering, exploratory analysis, or downstream statistical models of technological relatedness.
 
-The implemented workflow follows four main stages. First, patent records are read from a structured text file containing patent identifiers and textual descriptions. Second, the text of each eligible patent is normalized and tokenized into a sequence of lowercased word and punctuation tokens. Third, the resulting document-token sequences are used to train a Doc2Vec model, which learns a dense vector representation for each patent. Fourth, the learned vectors are exported in tabular and line-delimited JSON formats to support subsequent analysis outside the training script.
+The implemented workflow follows four main stages. First, patent records are read from structured text files containing patent identifiers, descriptions, and claims. Second, the description and claims belonging to the same patent identifier are joined into one document, with the description preceding the claims, and the resulting text is normalized and tokenized into a sequence of lowercased word and punctuation tokens. Third, the resulting document-token sequences are used to train a Doc2Vec model, which learns a dense vector representation for each patent. Fourth, the learned vectors are exported in tabular and line-delimited JSON formats to support subsequent analysis outside the training script.
 
 ## Input Data and Unit of Analysis
 
-The unit of analysis is the individual patent. Each record is identified by a patent identifier and associated with a textual field, drawn from either an abstract column or a general text column. The procedure is designed to prioritize available patent text while maintaining a consistent document-level representation. If both candidate text fields are available, the first populated field according to the configured column order is used.
+The unit of analysis is the individual patent. Each record is identified by a patent identifier and associated with textual material drawn from two source files: a description/body file and a claims file. Records are matched by patent number. For each patent, the document supplied to the model consists of the available description followed by the available claims. This ordering preserves a consistent document-level representation while retaining both explanatory technical narrative and legally oriented claim language.
 
 The procedure applies several eligibility rules before a patent enters the model corpus. Records without a patent identifier are excluded. Design patents, identified by patent identifiers beginning with the letter `D`, are excluded from the corpus. Duplicate patent identifiers are also removed, so that each patent contributes at most one document to the training data. Finally, documents shorter than a minimum token threshold are excluded to reduce the influence of extremely sparse textual records.
 
@@ -34,7 +34,7 @@ The resulting embedding space can be interpreted as a learned representation of 
 
 After training, the model is saved to disk and the learned document vectors are exported for external use. For each eligible patent, the procedure writes the patent identifier, the token count of the source document, and the corresponding vector representation. Vectors are exported in two complementary formats: a CSV file for spreadsheet- and dataframe-oriented workflows, and a JSONL file for record-wise processing in notebook or pipeline environments.
 
-The procedure also writes a summary file containing key metadata about the run, including the input file path, the number of exported vectors, the vector dimensionality, the number of training epochs, the minimum document-length threshold, the text columns considered, the CSV delimiter, and the output paths. This metadata provides a compact record of the modeling configuration and supports reproducibility across analysis runs.
+The procedure also writes a summary file containing key metadata about the run, including the description and claims input file paths, the number of exported vectors, the vector dimensionality, the number of training epochs, the minimum document-length threshold, the identifier and text columns considered, the CSV delimiter, and the output paths. This metadata provides a compact record of the modeling configuration and supports reproducibility across analysis runs.
 
 ## Analytical Interpretation
 
@@ -56,7 +56,7 @@ This notebook should be understood as an exploratory, file-based replacement for
 
 ## Methodological Considerations
 
-Several methodological considerations should be noted when interpreting the resulting vectors. First, the learned representation depends on the textual fields available in the input data. If abstracts are used rather than full patent descriptions or claims, the embedding space reflects the information contained in those shorter summaries. Second, the exclusion of short documents and design patents shapes the population represented in the final vector set. Third, Doc2Vec models are stochastic and may vary across runs unless random seeds and the computational environment are explicitly controlled.
+Several methodological considerations should be noted when interpreting the resulting vectors. First, the learned representation depends on the textual fields available in the input data. In the current workflow, the embedding space reflects the combined language of patent descriptions and claims, rather than the shorter abstract-only representation used in earlier tests. Second, the exclusion of short documents and design patents shapes the population represented in the final vector set. Third, Doc2Vec models are stochastic and may vary across runs unless random seeds and the computational environment are explicitly controlled.
 
 In this implementation, strict deterministic reproducibility is not enforced through a fixed random seed and single-threaded execution. This choice reflects a practical trade-off between computational reproducibility and computational feasibility. The patent corpus is potentially large, and training document embeddings over many epochs is computationally intensive. The procedure therefore uses multi-threaded training across the available CPU cores in order to make model estimation tractable within reasonable time constraints. Because parallel training can introduce small run-to-run differences in the order of model updates, the resulting vectors should be understood as realizations of the same stochastic embedding procedure rather than as bitwise-identical deterministic outputs.
 

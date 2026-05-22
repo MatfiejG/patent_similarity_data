@@ -4,23 +4,27 @@ US patent similarity tools for training Doc2Vec vectors and exporting results in
 
 ## Current workflow
 
-`patent_d2v.py` now trains directly from a CSV test file and writes outputs to the `Outputs/` folder:
+`patent_algo_d2v.py` trains directly from raw patent text CSV files and writes outputs to the `Outputs/` folder:
 
 - `Outputs/patent_doc2v_12e.model`
 - `Outputs/patent_doc2v_vectors.csv`
 - `Outputs/patent_doc2v_vectors.jsonl`
 - `Outputs/patent_doc2v_summary.json`
 
-The script is currently configured to read:
+The script is currently configured to read and join:
 
-- `Data/Test/all_patent_names_abstracts.csv`
+- `Data/Raw/all_patent_names_description.csv`
+- `Data/Raw/all_patent_names_claims.csv`
 
 The expected input columns are:
 
-- `patent_id`
-- `abstract` or `text`
+- patent identifier: `Patent_number` or `patent_id`
+- description/body text: `Description`, `description`, `body`, or `text`
+- claims text: `claims`, `Claims`, `claim`, or `text`
 
-During long CSV passes, `patent_d2v.py` displays `tqdm` progress bars for:
+For each patent number, the script combines the description first and the claims second into a single document before tokenization and Doc2Vec training.
+
+During long CSV passes, `patent_algo_d2v.py` displays `tqdm` progress bars for:
 
 - reading patent records for Doc2Vec training
 - exporting trained patent vectors to CSV and JSONL
@@ -84,8 +88,8 @@ Because the notebook constructs the full cosine similarity matrix, memory use sc
 
 ## Notes
 
-- The current test CSV in this workspace is `all_patent_names_abstracts.csv`. A file named `all_patent_names.csv` was not present.
-- The minimum token threshold was reduced so the abstract-only test data can be used for training.
+- The current training corpus uses full raw description and claims files rather than the earlier abstract-only test file.
+- The summary file records both input CSV paths and the configured identifier/text column names.
 - The original notebook in this repository still contains SQLite-based analysis examples and should be treated as legacy until those analysis steps are rewritten around file-based inputs. The vectors-only notebook is the current file-based example for similarity analysis.
 
 ## Reference
